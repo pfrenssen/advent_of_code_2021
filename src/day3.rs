@@ -19,7 +19,7 @@ fn part1(report: &[Vec<char>]) -> usize {
         })
         .collect();
     let intval = usize::from_str_radix(mcb.as_str(), 2).unwrap();
-    let bitmask = 2usize.pow(mcb.len() as u32) - 1;
+    let bitmask = 2_usize.pow(mcb.len() as u32) - 1;
     intval * (bitmask & !intval)
 }
 
@@ -39,9 +39,8 @@ fn part2(report: &[Vec<char>]) -> usize {
         let num1 = oxygen.len() - num0;
 
         oxygen = match num0.cmp(&num1) {
-            Ordering::Less => filter(oxygen, '1', i),
             Ordering::Greater => filter(oxygen, '0', i),
-            Ordering::Equal => filter(oxygen, '1', i),
+            _ => filter(oxygen, '1', i),
         };
     }
     let oxygen = oxygen[0].iter().collect::<String>();
@@ -59,9 +58,8 @@ fn part2(report: &[Vec<char>]) -> usize {
         let num1 = co2.len() - num0;
 
         co2 = match num0.cmp(&num1) {
-            Ordering::Less => filter(co2, '0', i),
             Ordering::Greater => filter(co2, '1', i),
-            Ordering::Equal => filter(co2, '0', i),
+            _ => filter(co2, '0', i),
         };
     }
     let co2 = co2[0].iter().collect::<String>();
