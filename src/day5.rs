@@ -170,13 +170,13 @@ mod tests {
     #[test]
     fn part1_example() {
         let input = parse_input(get_test_input());
-        assert_eq!(5, part1(&input),);
+        assert_eq!(5, part1(&input));
     }
 
     #[test]
     fn part2_example() {
         let input = parse_input(get_test_input());
-        assert_eq!(12, part2(&input),);
+        assert_eq!(12, part2(&input));
     }
 
     fn get_test_input<'a>() -> &'a str {
