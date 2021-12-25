@@ -1,4 +1,7 @@
 use aoc_runner_derive::{aoc, aoc_generator};
+use itertools::Itertools;
+use std::string::ToString;
+use std::vec;
 
 #[aoc_generator(day8)]
 fn parse_input(input: &str) -> Vec<(Vec<String>, Vec<String>)> {
@@ -7,8 +10,14 @@ fn parse_input(input: &str) -> Vec<(Vec<String>, Vec<String>)> {
         .map(|l| {
             let parts = l.split(" | ").collect::<Vec<&str>>();
             (
-                parts[0].split_whitespace().map(|v| v.to_string()).collect(),
-                parts[1].split_whitespace().map(|v| v.to_string()).collect(),
+                parts[0]
+                    .split_whitespace()
+                    .map(ToString::to_string)
+                    .collect(),
+                parts[1]
+                    .split_whitespace()
+                    .map(ToString::to_string)
+                    .collect(),
             )
         })
         .collect()
@@ -30,7 +39,123 @@ fn part1(notes: &[(Vec<String>, Vec<String>)]) -> usize {
 
 #[aoc(day8, part2)]
 fn part2(notes: &[(Vec<String>, Vec<String>)]) -> usize {
-    0
+    let superset = |set: &Vec<String>, search: &String| -> String {
+        set.iter()
+            .fold(None, |acc, p| {
+                if let Some(q) = acc {
+                    Some(q)
+                } else {
+                    for c in search.chars() {
+                        if !p.contains(c) {
+                            return None;
+                        }
+                    }
+                    Some(p)
+                }
+            })
+            .unwrap()
+            .to_string()
+    };
+
+    let not_superset = |set: &Vec<String>, search: &String| -> String {
+        set.iter()
+            .fold(None, |acc, p| {
+                if let Some(q) = acc {
+                    Some(q)
+                } else {
+                    for c in search.chars() {
+                        if !p.contains(c) {
+                            return Some(p);
+                        }
+                    }
+                    None
+                }
+            })
+            .unwrap()
+            .to_string()
+    };
+
+    let subset = |set: &Vec<String>, search: &String| -> String {
+        set.iter()
+            .fold(None, |acc, p| {
+                if let Some(q) = acc {
+                    Some(q)
+                } else {
+                    for c in p.chars() {
+                        if !search.contains(c) {
+                            return None;
+                        }
+                    }
+                    Some(p)
+                }
+            })
+            .unwrap()
+            .to_string()
+    };
+
+    let sortstrings = |set: Vec<String>| -> Vec<String> {
+        set.iter()
+            .map(|p| p.chars().sorted().collect::<String>())
+            .collect()
+    };
+
+    let mut total = 0;
+
+    for note in notes {
+        let (patterns, value) = note;
+        let patterns = sortstrings(patterns.clone());
+        let value = sortstrings(value.clone());
+
+        let mut digits = vec![String::from(""); 10];
+
+        // Sort the patterns by number of segments.
+        let mut s5 = vec![];
+        let mut s6 = vec![];
+        for pattern in patterns {
+            match pattern.len() {
+                2 => digits[1] = pattern.to_string(),
+                3 => digits[7] = pattern.to_string(),
+                4 => digits[4] = pattern.to_string(),
+                5 => s5.push(pattern.to_string()),
+                6 => s6.push(pattern.to_string()),
+                7 => digits[8] = pattern.to_string(),
+                _ => unreachable!(),
+            }
+        }
+
+        // "3" has 5 segments and contains all the segments of "7".
+        digits[3] = superset(&s5, &digits[7]);
+        s5.remove(s5.iter().position(|p| *p == digits[3]).unwrap());
+
+        // "6" has 6 segments but misses a segment of "7".
+        digits[6] = not_superset(&s6, &digits[7]);
+        s6.remove(s6.iter().position(|p| *p == digits[6]).unwrap());
+
+        // "9" has 6 segments and is a superset of "4".
+        digits[9] = superset(&s6, &digits[4]);
+        s6.remove(s6.iter().position(|p| *p == digits[9]).unwrap());
+
+        // The remaining 6 segment digit is "0".
+        digits[0] = s6[0].clone();
+
+        // "5" is a subset of "9".
+        digits[5] = subset(&s5, &digits[9]);
+        s5.remove(s5.iter().position(|p| *p == digits[5]).unwrap());
+
+        // The remaining 5 segment digit is "2".
+        digits[2] = s5[0].clone();
+
+        let values: Vec<usize> = value
+            .iter()
+            .map(|d| digits.iter().position(|x| x == d).unwrap())
+            .collect();
+        let value: usize = format!("{}{}{}{}", values[0], values[1], values[2], values[3])
+            .parse()
+            .unwrap();
+        total += value;
+    }
+
+    total
 }
 
 #[cfg(test)]
@@ -253,7 +378,7 @@ mod tests {
     #[test]
     fn part2_example() {
         let input = parse_input(get_test_input());
-        assert_eq!(168, part2(&input),);
+        assert_eq!(61229, part2(&input),);
     }
 
     fn get_test_input<'a>() -> &'a str {
