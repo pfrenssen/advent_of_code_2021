@@ -44,7 +44,67 @@ fn part1(heightmap: &[Vec<u8>]) -> usize {
 
 #[aoc(day9, part2)]
 fn part2(heightmap: &[Vec<u8>]) -> usize {
-    0
+    let mut heightmap = heightmap.to_owned();
+    let xsize = heightmap.len();
+    let ysize = heightmap[0].len();
+
+    let mut size = 0_usize;
+    let mut sizes = vec![];
+    let mut queue: Vec<(usize, usize)> = vec![];
+
+    // Seed the queue with a starting coordinate.
+    while {
+        let startcoord = get_basin_coord(&heightmap);
+        if let Some(coord) = startcoord {
+            queue.push(coord);
+            size = 0;
+        }
+        startcoord.is_some()
+    } {
+        while !queue.is_empty() {
+            let (x, y) = queue.pop().unwrap();
+
+            // Fill in the position so it will not be counted again.
+            if heightmap[x][y] < 9 {
+                heightmap[x][y] = 9;
+                size += 1;
+            }
+
+            // Up.
+            if y > 0 && heightmap[x][y - 1] < 9 {
+                queue.push((x, y - 1));
+            }
+            // Down.
+            if y < ysize - 1 && heightmap[x][y + 1] < 9 {
+                queue.push((x, y + 1));
+            }
+            // Left.
+            if x > 0 && heightmap[x - 1][y] < 9 {
+                queue.push((x - 1, y));
+            }
+            // Right.
+            if x < xsize - 1 && heightmap[x + 1][y] < 9 {
+                queue.push((x + 1, y));
+            }
+        }
+        sizes.push(size);
+    }
+
+    sizes.sort_unstable();
+    sizes.as_slice()[sizes.len() - 3..].iter().product()
+}
+
+fn get_basin_coord(heightmap: &[Vec<u8>]) -> Option<(usize, usize)> {
+    let xsize = heightmap.len();
+    let ysize = heightmap[0].len();
+    for x in 0..xsize {
+        for y in 0..ysize {
+            if heightmap[x][y] < 9 {
+                return Some((x, y));
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -66,13 +126,13 @@ mod tests {
     #[test]
     fn part1_example() {
         let input = parse_input(get_test_input());
-        assert_eq!(15, part1(&input),);
+        assert_eq!(15, part1(&input));
     }
 
     #[test]
     fn part2_example() {
         let input = parse_input(get_test_input());
-        assert_eq!(168, part2(&input),);
+        assert_eq!(1134, part2(&input));
     }
 
     fn get_test_input<'a>() -> &'a str {
